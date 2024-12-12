@@ -28,6 +28,43 @@ const getResults = async (req, res) => {
       }, 0);
     };
 
+    const calculateAssets = (data, value_type) => {
+      return data.reduce((total, entry) => {
+        if (
+          entry.account_category === "assets" &&
+          entry.value_type === value_type &&
+          (entry.account_type === "current" ||
+            entry.account_type === "bank" ||
+            entry.account_type === "current_accounts_receivable")
+        ) {
+          return total + (entry.total_value || 0);
+        }
+        return total;
+      }, 0);
+    };
+
+    const calculateLiabilities = (data, value_type) => {
+      return data.reduce((total, entry) => {
+        if (
+          entry.account_category === "liability" &&
+          entry.value_type === value_type &&
+          (entry.account_type === "current" ||
+            entry.account_type === "current_accounts_receivable")
+        ) {
+          return total + (entry.total_value || 0);
+        }
+        return total;
+      }, 0);
+    };
+    const assets =
+      calculateAssets(allData.data, "debit") -
+      calculateAssets(allData.data, "credit");
+
+    const liabilities =
+      calculateLiabilities(allData.data, "credit") -
+      calculateLiabilities(allData.data, "debit");
+    const workingCapitalRatio = assets / liabilities;
+
     // Call the function with the data
     const totalRevenue = calculateTotal(allData.data, "revenue");
     const totalExpenses = calculateTotal(allData.data, "expense");
@@ -38,20 +75,24 @@ const getResults = async (req, res) => {
       ? ((grossProfit / totalRevenue) * 100).toFixed(2)
       : 0;
 
+    // Calculate Net Profit Margin
+    const netProfit = totalRevenue - totalExpenses;
+    const netProfitMargin = totalRevenue
+      ? ((netProfit / totalRevenue) * 100).toFixed(2)
+      : 0;
+
     const result = {
-      Revenue: totalRevenue,
-      Expenses: totalExpenses,
+      Revenue: `${totalRevenue}`,
+      Expenses: `${totalExpenses}`,
       GrossProfitMargin: `${grossProfitMargin}%`,
+      NetProfitMargin: `${netProfitMargin}%`,
+      workingCapitalRatio: `${workingCapitalRatio}%`,
     };
 
-    return res
-      .status(200)
-      .json(
-        createResponseObject(true, " Calculations done successfully.", result)
-      );
+    return res.status(200).json(createResponseObject(result));
   } catch (err) {
     return res.status(500).json(
-      createResponseObject(false, "Failed to calculate revenue.", {
+      createResponseObject({
         error: err.message,
       })
     );

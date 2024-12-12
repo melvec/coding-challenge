@@ -1,7 +1,5 @@
-const createResponseObject = (status, message, data = null) => {
+const createResponseObject = (data = null) => {
   return {
-    status,
-    message,
     data,
   };
 };
