@@ -9,6 +9,14 @@ const getResults = async (req, res) => {
 
     const allData = loadData();
 
+    const formatCurrency = (value) => {
+      return Math.floor(value).toLocaleString();
+    };
+
+    const formatPercentage = (value) => {
+      return value.toFixed(1);
+    };
+
     // Function to calculate total revenue and expenses
     const calculateTotal = (data, category) => {
       return data.reduce((total, entry) => {
@@ -56,6 +64,7 @@ const getResults = async (req, res) => {
         return total;
       }, 0);
     };
+
     const assets =
       calculateAssets(allData.data, "debit") -
       calculateAssets(allData.data, "credit");
@@ -63,6 +72,7 @@ const getResults = async (req, res) => {
     const liabilities =
       calculateLiabilities(allData.data, "credit") -
       calculateLiabilities(allData.data, "debit");
+
     const workingCapitalRatio = assets / liabilities;
 
     // Call the function with the data
@@ -72,21 +82,19 @@ const getResults = async (req, res) => {
 
     // Calculate Gross Profit Margin
     const grossProfitMargin = totalRevenue
-      ? ((grossProfit / totalRevenue) * 100).toFixed(2)
+      ? (grossProfit / totalRevenue) * 100
       : 0;
 
     // Calculate Net Profit Margin
     const netProfit = totalRevenue - totalExpenses;
-    const netProfitMargin = totalRevenue
-      ? ((netProfit / totalRevenue) * 100).toFixed(2)
-      : 0;
+    const netProfitMargin = totalRevenue ? (netProfit / totalRevenue) * 100 : 0;
 
     const result = {
-      Revenue: `${totalRevenue}`,
-      Expenses: `${totalExpenses}`,
-      GrossProfitMargin: `${grossProfitMargin}%`,
-      NetProfitMargin: `${netProfitMargin}%`,
-      workingCapitalRatio: `${workingCapitalRatio}%`,
+      Revenue: `$${formatCurrency(totalRevenue)}`,
+      Expenses: `$${formatCurrency(totalExpenses)}`,
+      GrossProfitMargin: `%${formatPercentage(grossProfitMargin)}`,
+      NetProfitMargin: `%${formatPercentage(netProfitMargin)}`,
+      workingCapitalRatio: `%${formatPercentage(workingCapitalRatio)}`,
     };
 
     return res.status(200).json(createResponseObject(result));
